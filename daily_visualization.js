@@ -11,11 +11,11 @@ const backgrounds = ['#2196f3', '#4caf50', '#f44336']
 
 const w = window.innerWidth
 const h = window.innerHeight
-const delay = 20
-const scSpeed = 0.1
+const delay = 10
+const scSpeed = 0.02
 const gap = (0.75 * h) / 3
 const lineHeight = 0.1 * h
-const startY = 0.2 * h
+const startY = 0.1 * h
 
 class MainData {
 
@@ -126,21 +126,51 @@ class LineNode {
         this.div.style.width = `${0}px`
         this.div.style.background = backgrounds[this.i]
         this.div.style.color = 'black'
-        this.div.style.fontSize = `${0.09 * h}px`
+        this.div.style.fontSize = `${0.04 * h}px`
         this.div.innerHTML = `${this.tag}: ${this.count}`
         this.prevW = 0
         document.body.appendChild(this.div)
     }
 
     update(scale, i) {
-        const delta = this.finalW * (this.data[i] / this.total)
+        const delta = this.finalW * scale * (this.data[i] / this.total)
         this.div.style.width = `${this.prevW + delta}px`
+    }
+}
+
+class TextNode {
+
+    constructor(text) {
+        this.initDom(text)
+    }
+
+    initDom(text) {
+        this.prevW = 1.1 * w
+        this.div = document.createElement('div')
+        this.div.style.color = '#212121'
+        this.div.style.fontSize = `${Math.min(w, h) * 0.05}px`
+        this.div.style.position = 'absolute'
+        this.div.style.left = `${this.prevW}px`
+        this.div.style.top = `${0.1 * h}px`
+        this.div.innerHTML = text
+        this.div.style.display = 'inline'
+        document.body.appendChild(this.div)
+    }
+
+    update(scale) {
+        const delta = w * 0.65 * scale
+        this.div.style.left = `${this.prevW - delta}px`
+    }
+
+    setPrevW() {
+        this.prevW = parseFloat(this.div.style.left)
     }
 }
 
 const confirmedLineNode = new LineNode(0, KEYS.DAILY_CONFIRMED, "confirmed")
 const recoveredLineNode = new LineNode(2, KEYS.DAILY_RECOVERED, "recovered")
 const deathLineNode = new LineNode(1, KEYS.DAILY_DECEASED, "deceased")
+var prev = null, curr = null
 
 const loop = new Loop()
 const state = new State()
@@ -152,15 +182,31 @@ function start() {
         confirmedLineNode.update(state.scale, i)
         recoveredLineNode.update(state.scale, i)
         deathLineNode.update(state.scale, i)
+        if (prev != null) {
+            prev.update(state.scale)
+        }
+        if (curr != null) {
+            curr.update(state.scale)
+        }
         state.update(() => {
             loop.stop()
             confirmedLineNode.setCount(i)
             recoveredLineNode.setCount(i)
             deathLineNode.setCount(i)
-            i++
-            if (i < limit) {
-                start()
+            curr.update(1)
+            curr.setPrevW()
+            if (prev != null) {
+                document.body.removeChild(prev.div)
             }
+            prev = curr
+            i++
+            setTimeout(() => {
+                if (i < limit) {
+                    curr = new TextNode(mainData.get(i).date)
+                    start()
+                }
+            }, 1000)
+
         })
     })
 }
@@ -173,6 +219,7 @@ window.onload = () => {
         recoveredLineNode.setDataPoint()
         deathLineNode.setDataPoint()
         limit = mainData.getLength()
+        curr = new TextNode(mainData.get(i).date)
         start()
     })
 }
