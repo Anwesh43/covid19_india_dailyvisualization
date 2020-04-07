@@ -25,7 +25,6 @@ class MainData {
 
     setData(data) {
         this.data = data["cases_time_series"]
-        this.data.splice(0, 20)
     }
 
     getLength() {
@@ -113,23 +112,31 @@ class LineNode {
 
     setCount(i) {
         this.count += this.data[i]
-        this.div.innerHTML = `${this.tag}: ${this.count}`
+        this.text.innerHTML = `${this.tag}: ${this.count}`
         this.prevW = parseFloat(this.div.style.width)
     }
 
     initStyle() {
+        const fontSize = 0.04 * h
         this.div = document.createElement('div')
+        this.text = document.createElement('div')
+
+        this.text.style.position = 'absolute'
+        this.text.style.top = `${startY + (this.i + 1) * gap - 1.5 * fontSize}px`
+        this.text.style.left = '0px'
         this.div.style.position = 'absolute'
         this.div.style.top = `${startY + (this.i + 1) * gap}px`
         this.div.style.left = '0px'
         this.div.style.height = `${lineHeight}px`
         this.div.style.width = `${0}px`
         this.div.style.background = backgrounds[this.i]
-        this.div.style.color = 'black'
-        this.div.style.fontSize = `${0.04 * h}px`
-        this.div.innerHTML = `${this.tag}: ${this.count}`
+        this.text.style.color = 'black'
+        this.text.style.fontSize = `${fontSize}px`
+        this.text.style.display = 'inline'
+        this.text.innerHTML = `${this.tag}: ${this.count}`
         this.prevW = 0
         document.body.appendChild(this.div)
+        document.body.appendChild(this.text)
     }
 
     update(scale, i) {
@@ -168,8 +175,8 @@ class TextNode {
 }
 
 const confirmedLineNode = new LineNode(0, KEYS.DAILY_CONFIRMED, "confirmed")
-const recoveredLineNode = new LineNode(2, KEYS.DAILY_RECOVERED, "recovered")
-const deathLineNode = new LineNode(1, KEYS.DAILY_DECEASED, "deceased")
+const recoveredLineNode = new LineNode(1, KEYS.DAILY_RECOVERED, "recovered")
+const deathLineNode = new LineNode(2, KEYS.DAILY_DECEASED, "deceased")
 var prev = null, curr = null
 
 const loop = new Loop()
