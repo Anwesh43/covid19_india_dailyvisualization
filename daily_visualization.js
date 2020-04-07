@@ -71,3 +71,15 @@ class Loop {
         }
     }
 }
+
+class State {
+    scale = 0
+
+    update(cb) {
+        this.scale += scSpeed
+        if (this.scale > 1) {
+            cb()
+            this.scale = 0
+        }
+    }
+}
