@@ -6,6 +6,10 @@ const KEYS = {
     DAILY_DECEASED: "dailydeceased",
     DAILY_RECOVERED: "dailyrecovered"
 }
+
+const delay = 30
+const scSpeed = 0.02
+
 class MainData {
 
     current = 0
@@ -48,4 +52,22 @@ window.onload = () => {
         mainData.setData(data)
         console.log("received data")
     })
+}
+
+class Loop {
+
+    animated = false
+    start(cb) {
+        if (!this.animated) {
+            this.animated = true
+            this.interval = setInterval(cb, delay)
+        }
+    }
+
+    stop() {
+        if (this.animated) {
+            this.animated = fasle
+            clearInterval(this.interval)
+        }
+    }
 }
