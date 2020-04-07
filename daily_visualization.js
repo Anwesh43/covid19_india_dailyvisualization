@@ -11,10 +11,10 @@ const backgrounds = ['#2196f3', '#4caf50', '#f44336']
 
 const w = window.innerWidth
 const h = window.innerHeight
-const delay = 30
-const scSpeed = 0.02
+const delay = 20
+const scSpeed = 0.1
 const gap = (0.75 * h) / 3
-const lineHeight = 0.3 * h
+const lineHeight = 0.1 * h
 const startY = 0.2 * h
 
 class MainData {
@@ -25,6 +25,7 @@ class MainData {
 
     setData(data) {
         this.data = data["cases_time_series"]
+        this.data.splice(0, 20)
     }
 
     getLength() {
@@ -62,13 +63,6 @@ class MainData {
 
 var mainData = new MainData()
 
-window.onload = () => {
-    fetch(APIS.DATA).then(res=>res.json()).then(data => {
-        mainData.setData(data)
-        console.log("received data")
-    })
-}
-
 class Loop {
 
     animated = false
@@ -81,7 +75,7 @@ class Loop {
 
     stop() {
         if (this.animated) {
-            this.animated = fasle
+            this.animated = false
             clearInterval(this.interval)
         }
     }
@@ -101,22 +95,24 @@ class State {
 
 class LineNode {
     count = 0
-    constructor(color, finalW, i, tag) {
-        this.color = color
-
+    constructor(i, key, tag) {
         this.i = i
         this.tag = tag
+        this.key = key
         this.initStyle()
+
     }
 
-    setDataPoint(key) {
-        this.data = mainData.getDataPoint(key)
-        this.total = mainData.getFilteredCases(key)
+    setDataPoint() {
+        this.data = mainData.getDataPoint(this.key)
+        console.log(this.key, this.data)
+        this.total = mainData.getFilteredCases(this.key)
         this.finalW = w * (this.total) / mainData.getTotal()
+        console.log(this.tag, this.finalW)
     }
 
-    setCount(count) {
-        this.count = count
+    setCount(i) {
+        this.count += this.data[i]
         this.div.innerHTML = `${this.tag}: ${this.count}`
         this.prevW = parseFloat(this.div.style.width)
     }
@@ -124,12 +120,12 @@ class LineNode {
     initStyle() {
         this.div = document.createElement('div')
         this.div.style.position = 'absolute'
-        this.div.style.top = `${start + (this.i + 1) * gap}px`
+        this.div.style.top = `${startY + (this.i + 1) * gap}px`
         this.div.style.left = '0px'
         this.div.style.height = `${lineHeight}px`
         this.div.style.width = `${0}px`
         this.div.style.background = backgrounds[this.i]
-        this.div.style.color = 'white'
+        this.div.style.color = 'black'
         this.div.style.fontSize = `${0.09 * h}px`
         this.div.innerHTML = `${this.tag}: ${this.count}`
         this.prevW = 0
@@ -140,4 +136,43 @@ class LineNode {
         const delta = this.finalW * (this.data[i] / this.total)
         this.div.style.width = `${this.prevW + delta}px`
     }
+}
+
+const confirmedLineNode = new LineNode(0, KEYS.DAILY_CONFIRMED, "confirmed")
+const recoveredLineNode = new LineNode(2, KEYS.DAILY_RECOVERED, "recovered")
+const deathLineNode = new LineNode(1, KEYS.DAILY_DECEASED, "deceased")
+
+const loop = new Loop()
+const state = new State()
+var i = 0
+var limit = mainData.getLength()
+function start() {
+    console.log(`looping for ${i}`)
+    loop.start(() => {
+        confirmedLineNode.update(state.scale, i)
+        recoveredLineNode.update(state.scale, i)
+        deathLineNode.update(state.scale, i)
+        state.update(() => {
+            loop.stop()
+            confirmedLineNode.setCount(i)
+            recoveredLineNode.setCount(i)
+            deathLineNode.setCount(i)
+            i++
+            if (i < limit) {
+                start()
+            }
+        })
+    })
+}
+
+window.onload = () => {
+    fetch(APIS.DATA).then(res=>res.json()).then(data => {
+        mainData.setData(data)
+        console.log("received data")
+        confirmedLineNode.setDataPoint()
+        recoveredLineNode.setDataPoint()
+        deathLineNode.setDataPoint()
+        limit = mainData.getLength()
+        start()
+    })
 }
