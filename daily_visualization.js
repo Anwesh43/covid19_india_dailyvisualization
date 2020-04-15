@@ -9,8 +9,14 @@ const KEYS = {
 
 const backgrounds = ['#2196f3', '#4caf50', '#f44336']
 
-const w = window.innerWidth
-const h = window.innerHeight
+var w = window.innerWidth
+var h = window.innerHeight
+
+window.onresize = () => {
+    w = window.innerWidth
+    h = window.innerHeight
+}
+
 const delay = 10
 const scSpeed = 0.02
 const gap = (0.75 * h) / 3
