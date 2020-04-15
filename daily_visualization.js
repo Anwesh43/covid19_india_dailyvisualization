@@ -31,6 +31,7 @@ class MainData {
 
     setData(data) {
         this.data = data["cases_time_series"]
+        this.totalInFirst45 = this.data.splice(0, 45)
     }
 
     getLength() {
@@ -41,16 +42,28 @@ class MainData {
         return this.data[i]
     }
 
+    getFilteredCasesForData(data, key) {
+        return data.map(entry => parseInt(entry[key])).reduce((a, b) => a + b)
+    }
+
     getFilteredCases(key) {
-        return this.data.map(entry => parseInt(entry[key])).reduce((a, b) => a + b)
+        return this.getFilteredCasesForData(this.data, key)
+    }
+
+    getFirst45FilteredCases(key) {
+        return this.getFilteredCasesForData(this.totalInFirst45, key)
+    }
+
+    getTotalFilteredCases(key) {
+        return this.getFilteredCases(key) + this.getFirst45FilteredCases(key)
     }
 
     getConfirmedCases() {
-        return this.getFilteredCases(KEYS.DAILY_CONFIRMED)
+        return this.getTotalFilteredCases(KEYS.DAILY_CONFIRMED)
     }
 
     getRecoveredCases() {
-        return this.getFilteredCases(KEYS.DAILY_RECOVERED)
+        return this.getTotalFilteredCases(KEYS.DAILY_RECOVERED)
     }
 
     getTotal() {
@@ -58,7 +71,7 @@ class MainData {
     }
 
     getDeceasedCases() {
-        return this.getFilteredCases(KEYS.DAILY_DECEASED)
+        return this.getTotalFilteredCases(KEYS.DAILY_DECEASED)
     }
 
     getDataPoint(key) {
